@@ -1,5 +1,7 @@
 import java.util.LinkedHashMap;
 
+import maybe.Nothing;
+import maybe.Predicate;
 
 public class Test<A> {
 
@@ -9,20 +11,67 @@ public class Test<A> {
 		
 		mapOfGraph = parseGraph();
 		
-		int startPoint    = 0;
-		int goalPoint     = 60;
-		
-		Node<Coordinate> startNode = mapOfGraph.get(startPoint);
-		Node<Coordinate> goalNode  = mapOfGraph.get(goalPoint);
-		
-		Search<Coordinate> graphSearch = new Search<Coordinate>();
+		int startPoint = 0;
 		
 		System.out.println();
+		System.out.println("Depth first search: ");
+		
+		for(int i = 0; i < 70; i++) {
+			int goalPoint  = i;
+			Node<Coordinate> startNode = mapOfGraph.get(startPoint);
+			final Node<Coordinate> goalNode  = mapOfGraph.get(goalPoint);
+			
+			Search<Coordinate> graphSearch = new Search<Coordinate>();
+			
+			Predicate<Coordinate> predicate = new Predicate<Coordinate>(){
+				public boolean holds(Coordinate x) {
+					if(x.toString().equals(goalNode.toString())) {
+						return true;
+					}
+					return false;
+				}
+			};
+			
+			if(graphSearch.DFS(mapOfGraph, startNode, predicate).isNothing()) {
+				System.out.println("          No route found");
+			} else {
+				System.out.println("          " + (graphSearch.DFS(mapOfGraph, startNode, 
+						predicate)));
+			}
+		}
+			
+		
 		System.out.println();
+		System.out.println("--------------------------------------------------");
+		System.out.println();
+			
+		System.out.println("Breadth first search: ");
 		
-		System.out.println(graphSearch.DFS(mapOfGraph, startNode, goalNode));
-		System.out.println(graphSearch.BFS(mapOfGraph, startNode, goalNode));
+		for(int i = 0; i < 70; i++) {
+			
+			int goalPoint  = i;
+			Node<Coordinate> startNode = mapOfGraph.get(startPoint);
+			final Node<Coordinate> goalNode  = mapOfGraph.get(goalPoint);
+			
+			Search<Coordinate> graphSearch = new Search<Coordinate>();
+			
+			Predicate<Coordinate> predicate = new Predicate<Coordinate>(){
+				public boolean holds(Coordinate x) {
+					if(x.toString().equals(goalNode.toString())) {
+						return true;
+					}
+					return false;
+				}
+			};
 		
+			if(graphSearch.BFS(mapOfGraph, startNode, predicate).isNothing()) {
+				System.out.println("          No route found");
+			} else {
+				System.out.println("          " + (graphSearch.BFS(mapOfGraph, startNode, 
+						predicate)));
+			}
+		}
+		System.out.println("--------------------------------------------------");
 	}
 	
 	public static LinkedHashMap<Integer, Node<Coordinate>> parseGraph() {

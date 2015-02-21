@@ -1,6 +1,11 @@
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
+import maybe.Just;
+import maybe.Maybe;
+import maybe.Nothing;
+import maybe.Predicate;
+
 public class Search<A> {
 	
 	/*
@@ -136,70 +141,77 @@ public class Search<A> {
 	}
 	*/
 	
-	public Node<Coordinate> DFS(LinkedHashMap<Integer, Node<Coordinate>> map, 
-			Node<Coordinate> startNode, Node<Coordinate> goalNode) {
+	public Maybe<Node<A>> DFS(LinkedHashMap<Integer, Node<A>> map, 
+			Node<A> startNode, Predicate<A> p) {
 		
 		
-		Stack<Coordinate> stack = new Stack<Coordinate>();
-		ArrayList<Node<Coordinate>> explored = new ArrayList<Node<Coordinate>>();
+		Stack<A> stack = new Stack<A>();
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
 		
 		stack.push(startNode);
 		
 		while(!stack.isEmpty()) {
-			Node<Coordinate> x = stack.pop();
+			Node<A> x = stack.pop();
 			
 			if(!(alreadyExplored(explored, x))) {
 				
-				if(x.toString().equals(goalNode.toString())) {
-					return x;
+				if(p.holds(x.getNodeContent())) {
+					Maybe<Node<A>> r = (Maybe<Node<A>>) new Just<A>(x.getNodeContent());
+					
+					return r;
 				}
 				
 				explored.add(x);
 				
-				for(Node<Coordinate> succ: x.getSuccessors()) {
+				for(Node<A> succ: x.getSuccessors()) {
 					if(!(alreadyExplored(explored, succ))) {
 						stack.push(map.get(succ.getNodeNum()));
 					}
 				}
 			}
 		}
-		
-		
-		
-		return startNode;
+		Maybe<Node<A>> r = (Maybe<Node<A>>) new Nothing<A>();
+		return r;
 	}
 	
 	
-	public Node<Coordinate> BFS(LinkedHashMap<Integer, Node<Coordinate>> map, 
-			Node<Coordinate> startNode, Node<Coordinate> goalNode) {
+	public Maybe<Node<A>> BFS(LinkedHashMap<Integer, Node<A>> map, 
+			Node<A> startNode, Predicate<A> p) {
 		
-		Queue<Coordinate> queue = new Queue<Coordinate>(startNode);
-		ArrayList<Node<Coordinate>> explored = new ArrayList<Node<Coordinate>>();
+		Queue<A> queue = new Queue<A>(startNode);
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
 		 
 		while(!queue.isEmpty()) {
 					
-			Node<Coordinate> x = queue.dequeue();
+			Node<A> x = queue.dequeue();
 			
 			if(!(alreadyExplored(explored, x))) {
-				//if(p.holds(x.getNodeContent())) {
-				if(x.toString().equals(goalNode.toString())) {
+				if(p.holds(x.getNodeContent())) {
+					
+					Maybe<Node<A>> r = (Maybe<Node<A>>) new Just<A>(x.getNodeContent());
+					
+					return r;
+				}
+				/*if(x.toString().equals(goalNode.toString())) {
 					return x;
 				}
+				*/
 				
 				explored.add(x);
 			}	
 			
-			for(Node<Coordinate> succ: x.getSuccessors()) {
+			for(Node<A> succ: x.getSuccessors()) {
 				if(!(alreadyExplored(explored, succ))) {
 					queue.enqueue(map.get(succ.getNodeNum()));
 				}
 			}
 			
 		}	
-		return startNode;
+		Maybe<Node<A>> r = (Maybe<Node<A>>) new Nothing<A>();
+		return r;
 	}
 	
-	public boolean alreadyExplored(ArrayList<Node<Coordinate>> explored, Node<Coordinate> searchNode) {
+	public boolean alreadyExplored(ArrayList<Node<A>> explored, Node<A> searchNode) {
 		//System.out.println("Visited: ");
 		for(int i = 0; i < explored.size(); i++) {
 			//System.out.println(explored.get(i).toString());
@@ -210,4 +222,5 @@ public class Search<A> {
 		
 		return false;
 	}
+	
 }
