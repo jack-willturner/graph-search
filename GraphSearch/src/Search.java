@@ -112,6 +112,64 @@ public class Search<A> {
 		return true;
 	}
 	
+	public Stack<A> findPathFrom(LinkedHashMap<Integer, Node<A>> map, DataStructure<A> struct, Node<A> startNode, Predicate<Node<A>> p) {
+		
+		Stack<A> path  = new Stack<A>();
+		struct.push(startNode);
+	
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		
+		LinkedHashMap<Integer, Integer> route = new LinkedHashMap<Integer, Integer>();
+		
+		 
+		while(!struct.isEmpty()) {
+					
+			Node<A> x = struct.pop();
+			
+			if(!(alreadyExplored(explored, x))) {
+				if(p.holds(x)) {
+					int backtrack = x.getNodeNum();
+					while(backtrack != startNode.getNodeNum()) {
+						path.push(map.get(backtrack));
+						backtrack = route.get(backtrack);
+					}
+					return path;
+				}
+				
+				explored.add(x);
+				
+				if(x.isLeaf()) {
+					path.pop();
+					Node<A> y = path.pop();
+					while(successorsExplored(explored, y)) {
+						y = path.pop();
+					}
+					path.push(y);
+				} else {
+					for(Node<A> succ: x.getSuccessors()) {
+						if(!(alreadyExplored(explored, succ))) {
+							struct.push(map.get(succ.getNodeNum()));
+							route.put(succ.getNodeNum(), x.getNodeNum());
+						}
+					}
+				}
+			}
+		}	
+		
+		return new Stack<A>();
+	}
+	
+	
+	
+	
+	
+	
+	/** Non-generalised DFS method
+	 * 
+	 * @param map
+	 * @param startNode
+	 * @param p
+	 * @return
 	public Stack<A> findPathFromDFS(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Predicate<Node<A>> p) {
 		
 		
@@ -153,8 +211,9 @@ public class Search<A> {
 		}
 		return new Stack<A>();
 	}
+	*/
 	
-	
+	/*
 	public Stack<A> findPathFromBFS(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Predicate<Node<A>> p) {
 	
 		Stack<A> path  = new Stack<A>();
@@ -201,6 +260,7 @@ public class Search<A> {
 		
 		return new Stack<A>();
 	}
+	*/
 
 	
 	public Stack<A> findPathFromAStar(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Node<A> destination,
