@@ -1,34 +1,116 @@
+import ilist.Function2;
+
+import java.util.LinkedHashMap;
+import java.util.Scanner;
+
+import maybe.Predicate;
 
 public class Test<A> {
 
 	public static void main(String[] args) {
 		
-		Stack<Coordinate> stack = refillStack();
-		System.out.println("--------------------------------------------");
-		System.out.println(stack.getSize());
+		LinkedHashMap<Integer, Node<Coordinate>> mapOfGraph = new LinkedHashMap<Integer, Node<Coordinate>>();
+		
+		Search<Coordinate> graphSearch = new Search<Coordinate>();
+		
+		mapOfGraph = parseGraph();
+		
+		
+		System.out.println("--------------------------------------------------");
+		
+		System.out.println();
 		System.out.println();
 		
-		stack = refillStack();
-		System.out.println("--------------------------------------------");
-		System.out.println(stack.getSize());
-		Node<Coordinate> startNode = stack.findNode(stack, "(0,0)");
-		System.out.println();
+		boolean searchAgain = true;
 		
-		stack = refillStack();
-		System.out.println();
-		System.out.println("--------------------------------------------");
-		System.out.println(stack.getSize());
-		Node<Coordinate> goalNode = stack.findNode(stack, "(9,1)");
-		System.out.println();
+		while(searchAgain) {
+			Scanner in = new Scanner(System.in);
+			
+			System.out.println("Enter X coordinate to start from: " );
+			int x1 = in.nextInt(); in.nextLine();
+			
+			System.out.println("Enter Y coordinate to start from: " );
+			int y1 = in.nextInt(); in.nextLine();
+			
+			System.out.println();
+			
+			System.out.println("Enter X coordinate to search for: " );
+			int x2 = in.nextInt(); in.nextLine();
+			
+			System.out.println("Enter Y coordinate to search for: " );
+			int y2 = in.nextInt(); in.nextLine();
+			
+			int startPoint = (x1 * 7) + y1;
+			final int goalPoint  = (x2 * 7) + y2;
+			
+			
+			Node<Coordinate> startNode = mapOfGraph.get(startPoint);	
+			Node<Coordinate> goalNode  = mapOfGraph.get(goalPoint);
+			
+			Predicate<Node<Coordinate>> predicate = new Predicate<Node<Coordinate>>() {
+				public boolean holds(Node<Coordinate> x) {
+					if(x.getNodeNum() == goalPoint) {
+						return true;
+					}
+					return false;
+				}
+			};
+			
+			System.out.println("Depth first:   " + graphSearch.findPathFromDFS(mapOfGraph, startNode, predicate)); 
+			System.out.println("Breadth first: " + startNode + " " + graphSearch.findPathFromBFS(mapOfGraph, startNode, predicate)); 
 		
+			Function2<Node<Coordinate>, Node<Coordinate>, Integer> distance = new Function2<Node<Coordinate>, Node<Coordinate>, Integer>() {
+				public Integer apply(Node<Coordinate> origin, Node<Coordinate> destination) {
+					
+					Coordinate a = origin.getNodeContent();
+					Coordinate b = destination.getNodeContent();
+					
+					int x1 = a.getX();
+					int x2 = b.getX();
+					
+					int y1 = a.getY();
+					int y2 = b.getY();
+					
+					double distance = Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+					
+					return (int) distance;
+				}
+			};
+			
+			Function2<Node<Coordinate>, Node<Coordinate>, Integer> h = new Function2<Node<Coordinate>, Node<Coordinate>, Integer>() {
+				public Integer apply(Node<Coordinate> origin, Node<Coordinate> goalNode) {
+					
+					Coordinate a = origin.getNodeContent();
+					Coordinate b = goalNode.getNodeContent();
+					
+					int x1 = a.getX();
+					int x2 = b.getX();
+					
+					int y1 = a.getY();
+					int y2 = b.getY();
+					
+					double goalD = Math.abs(Math.sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2)));
+					
+					return (int) goalD;
+
+				}
+			};
+			
+			System.out.println("A star search: " + startNode + " " + graphSearch.findPathFromAStar(mapOfGraph, startNode, goalNode, h));
 		
-		Search graphSearch = new Search();
-		System.out.println(graphSearch.DFS(startNode, goalNode));
-		
-		
+			System.out.println();
+			System.out.println("Would you like to search again? [Y/N] ");
+			String opt = in.nextLine();
+			if(opt.toUpperCase().equals("Y")) {
+				searchAgain = true;
+			} else {
+				searchAgain = false;
+			}
+		}		
 	}
+
 	
-	public static Stack<Coordinate> refillStack() {
+	public static LinkedHashMap<Integer, Node<Coordinate>> parseGraph() {
 		
 		int [] [] nicksGraph = {
 				{0,0,1,0,0,1},
@@ -102,28 +184,32 @@ public class Test<A> {
 				{9,5,8,5,9,4,9,6}, 
 				{9,6,9,5,8,6} 
 			};
-		Stack<Coordinate> stack = new Stack<Coordinate>();
+		LinkedHashMap<Integer, Node<Coordinate>> map = new LinkedHashMap<Integer, Node<Coordinate>>();
 		
 		for(int i = 0; i < nicksGraph.length; i++) {
 			
 			Coordinate coord = new Coordinate(nicksGraph[i][0], nicksGraph[i][1]);
-			Node<Coordinate> nodeToPush = new Node<Coordinate>(coord);
+			Node<Coordinate> nodeToPush = new Node<Coordinate>(coord, i);
 			System.out.print("(" + nicksGraph[i][0] + ", " + nicksGraph[i][1] + "): ");
 			
 			for(int j = 2; j < (nicksGraph[i].length); j=j+2) {
+				
 				System.out.print("(" + nicksGraph[i][j] + ", " + nicksGraph[i][j+1] + ") ");
 				Coordinate others = new Coordinate(nicksGraph[i][j], nicksGraph[i][j+1]);
-				Node<Coordinate> successor = new Node<Coordinate>(others);
+				
+				int nodeNum = (nicksGraph[i][j] * 7) + (nicksGraph[i][j+1]);
+				
+				Node<Coordinate> successor = new Node<Coordinate>(others, nodeNum);
 				nodeToPush.addSuccessor(successor);
 			}
 			System.out.println();
-			stack.push(nodeToPush);
+			
+			if(map.containsKey(i)) {
+				map.remove(i);
+			}
+			map.put(i, nodeToPush);
 		}
-		
-		
-		return stack;
-		
+		return map;	
 	}
-	
 	
 }

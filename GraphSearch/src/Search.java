@@ -1,56 +1,95 @@
-
-
-
-
-
-
-
-
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
+
+import maybe.Just;
+import maybe.Maybe;
+import maybe.Nothing;
+import maybe.Predicate;
+import ilist.Function2;
 
 public class Search<A> {
 	
-	public Node<Coordinate> DFS(Node<Coordinate> startNode, Node<Coordinate> goalNode) {
+	public Maybe<Node<A>> DFS(LinkedHashMap<Integer, Node<A>> map, 
+			Node<A> startNode, Predicate<A> p) {
 		
-		Stack<Coordinate> stack = new Stack<Coordinate>();
+		
+		Stack<A> stack = new Stack<A>();
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		
 		stack.push(startNode);
-		
-		assert(!stack.isEmpty());
-		
-		ArrayList<Node<Coordinate>> explored = new ArrayList<Node<Coordinate>>();
-		
-		while(!stack.isEmpty()) {
-			//System.out.println(stack.top.content);
 			
-			Node<Coordinate> x = stack.pop();
-
+		while(!stack.isEmpty()) {
+			Node<A> x     = stack.pop();
+			
 			if(!(alreadyExplored(explored, x))) {
-				//System.out.println();
-				//System.out.println("X:       " + x.getNodeContent());
-				//System.out.println("Goal:    " + goalNode.getNodeContent());
-				if(x.toString().equals(goalNode.toString())) {
-					return x;
+				
+				if(p.holds(x.getNodeContent())) {
+					@SuppressWarnings("unchecked")
+					Maybe<Node<A>> r = (Maybe<Node<A>>) new Just<A>(x.getNodeContent());
+					
+					return r;
 				}
 				
-				//System.out.println("     " + x.getNodeContent());
-				//System.out.println(x.getSuccessors());
 				explored.add(x);
 				
-				for(Node<Coordinate> succ: x.getSuccessors()) {
+				for(Node<A> succ: x.getSuccessors()) {
 					if(!(alreadyExplored(explored, succ))) {
-						//System.out.print("Adding successor: " + succ.toString());
-						//System.out.println("         Searching for: " + succ.toString());
-						stack = refillStack();
-						stack.push(stack.findNode(stack, succ.toString()));
+						stack.push(map.get(succ.getNodeNum()));
 					}
 				}
+
 			}
-			//System.out.println("here");
-		}	
-		return startNode;		
-	}	
+		}
+		@SuppressWarnings("unchecked")
+		Maybe<Node<A>> r = (Maybe<Node<A>>) new Nothing<A>();
+		return r;
+	}
 	
-	public boolean alreadyExplored(ArrayList<Node<Coordinate>> explored, Node<Coordinate> searchNode) {
+	
+	public Maybe<Node<A>> BFS(LinkedHashMap<Integer, Node<A>> map, 
+			Node<A> startNode, Predicate<A> p) {
+		
+		Queue<A> queue = new Queue<A>(startNode);
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		 
+		while(!queue.isEmpty()) {
+					
+			Node<A> x = queue.dequeue();
+			
+			if(!(alreadyExplored(explored, x))) {
+				if(p.holds(x.getNodeContent())) {
+					
+					@SuppressWarnings("unchecked")
+					Maybe<Node<A>> r = (Maybe<Node<A>>) new Just<A>(x.getNodeContent());
+					
+					return r;
+				}
+				/*if(x.toString().equals(goalNode.toString())) {
+					return x;
+				}
+				*/
+				
+				explored.add(x);
+			}	
+			
+			for(Node<A> succ: x.getSuccessors()) {
+				if(!(alreadyExplored(explored, succ))) {
+					queue.enqueue(map.get(succ.getNodeNum()));
+				}
+			}
+			
+		}	
+		@SuppressWarnings("unchecked")
+		Maybe<Node<A>> r = (Maybe<Node<A>>) new Nothing<A>();
+		return r;
+	}
+	
+	public boolean alreadyExplored(ArrayList<Node<A>> explored, Node<A> searchNode) {
 		//System.out.println("Visited: ");
 		for(int i = 0; i < explored.size(); i++) {
 			//System.out.println(explored.get(i).toString());
@@ -62,223 +101,243 @@ public class Search<A> {
 		return false;
 	}
 	
-	
-	public Stack<Coordinate> refillStack() {
-		int [] [] nicksGraph = {
-				{0,0,1,0,0,1},
-				{0,1,0,0,1,1,0,2}, 
-				{0,2,0,3,0,1}, 
-				{0,3,0,2,0,4}, 
-				{0,4,0,3,0,5}, 
-				{0,5,0,6,1,5,0,4}, 
-				{0,6,1,6,0,5}, 
-				{1,0,0,0,1,1,2,0}, 
-				{1,1,1,2,2,1,1,0,0,1}, 
-				{1,2,2,2,1,1,1,3}, 
-				{1,3,1,2,1,4,2,3}, 
-				{1,4,2,4,1,5,1,3}, 
-				{1,5,1,4,2,5,1,6,0,5}, 
-				{1,6,0,6,1,5,2,6}, 
-				{2,0,3,0,2,1,1,0}, 
-				{2,1,2,2,1,1,2,0,3,1}, 
-				{2,2,1,2,2,1,2,3,3,2}, 
-				{2,3,2,2,2,4,3,3,1,3}, 
-				{2,4,1,4,2,5,2,3,3,4}, 
-				{2,5,2,4,1,5,2,6,3,5}, 
-				{2,6,3,6,2,5,1,6}, 
-				{3,0,2,0,3,1}, 
-				{3,1,3,0,4,1,2,1,3,2}, 
-				{3,2,2,2,4,2,3,1}, 
-				{3,3,2,3,3,4}, 
-				{3,4,2,4,3,3}, 
-				{3,5,3,6,2,5,4,5}, 
-				{3,6,2,6,3,5}, 
-				{4,0}, 
-				{4,1,4,2,5,1,3,1}, 
-				{4,2,4,1,5,2,3,2}, 
-				{4,3}, 
-				{4,4}, 
-				{4,5,5,5,3,5}, 
-				{4,6}, 
-				{5,0}, 
-				{5,1,4,1,5,2,6,1}, 
-				{5,2,4,2,5,1,6,2}, 
-				{5,3}, 
-				{5,4}, 
-				{5,5,4,5,6,5}, 
-				{5,6}, 
-				{6,0,7,0,6,1}, 
-				{6,1,6,0,5,1,6,2,7,1}, 
-				{6,2,5,2,6,1,7,2}, 
-				{6,3,7,3,6,4}, 
-				{6,4,6,3,7,4}, 
-				{6,5,5,5,6,6,7,5}, 
-				{6,6,7,6,6,5}, 
-				{7,0,6,0,7,1,8,0}, 
-				{7,1,8,1,7,0,6,1,7,2}, 
-				{7,2,7,3,8,2,6,2,7,1}, 
-				{7,3,6,3,7,2,7,4,8,3}, 
-				{7,4,7,3,8,4,6,4,7,5}, 
-				{7,5,8,5,7,6,7,4,6,5}, 
-				{7,6,6,6,7,5,8,6}, 
-				{8,0,8,1,7,0,9,0}, 
-				{8,1,8,2,9,1,7,1,8,0}, 
-				{8,2,8,1,7,2,8,3}, 
-				{8,3,8,2,7,3,8,4}, 
-				{8,4,8,5,8,3,7,4}, 
-				{8,5,9,5,8,4,7,5,8,6}, 
-				{8,6,8,5,7,6,9,6}, 
-				{9,0,9,1,8,0}, 
-				{9,1,8,1,9,2,9,0}, 
-				{9,2,9,1,9,3}, 
-				{9,3,9,2,9,4}, 
-				{9,4,9,5,9,3}, 
-				{9,5,8,5,9,4,9,6}, 
-				{9,6,9,5,8,6} 
-			};
-		Stack<Coordinate> stack = new Stack<Coordinate>();
+	public boolean successorsExplored(ArrayList<Node<A>> explored, Node<A> n) {
 		
-		for(int i = 0; i < nicksGraph.length; i++) {
-			
-			Coordinate coord = new Coordinate(nicksGraph[i][0], nicksGraph[i][1]);
-			Node<Coordinate> nodeToPush = new Node<Coordinate>(coord);
-			
-			for(int j = 2; j < (nicksGraph[i].length); j=j+2) {
-				Coordinate others = new Coordinate(nicksGraph[i][j], nicksGraph[i][j+1]);
-				Node<Coordinate> successor = new Node<Coordinate>(others);
-				nodeToPush.addSuccessor(successor);
+		for(Node<A> succ: n.getSuccessors()) {
+			if(!(alreadyExplored(explored, succ))) {
+				return false;
 			}
-			stack.push(nodeToPush);
 		}
-		return stack;
-
+		
+		return true;
 	}
 	
-	
-	public Queue<Coordinate> refillQueue() {
-		int [] [] nicksGraph = {
-				{0,0,1,0,0,1},
-				{0,1,0,0,1,1,0,2}, 
-				{0,2,0,3,0,1}, 
-				{0,3,0,2,0,4}, 
-				{0,4,0,3,0,5}, 
-				{0,5,0,6,1,5,0,4}, 
-				{0,6,1,6,0,5}, 
-				{1,0,0,0,1,1,2,0}, 
-				{1,1,1,2,2,1,1,0,0,1}, 
-				{1,2,2,2,1,1,1,3}, 
-				{1,3,1,2,1,4,2,3}, 
-				{1,4,2,4,1,5,1,3}, 
-				{1,5,1,4,2,5,1,6,0,5}, 
-				{1,6,0,6,1,5,2,6}, 
-				{2,0,3,0,2,1,1,0}, 
-				{2,1,2,2,1,1,2,0,3,1}, 
-				{2,2,1,2,2,1,2,3,3,2}, 
-				{2,3,2,2,2,4,3,3,1,3}, 
-				{2,4,1,4,2,5,2,3,3,4}, 
-				{2,5,2,4,1,5,2,6,3,5}, 
-				{2,6,3,6,2,5,1,6}, 
-				{3,0,2,0,3,1}, 
-				{3,1,3,0,4,1,2,1,3,2}, 
-				{3,2,2,2,4,2,3,1}, 
-				{3,3,2,3,3,4}, 
-				{3,4,2,4,3,3}, 
-				{3,5,3,6,2,5,4,5}, 
-				{3,6,2,6,3,5}, 
-				{4,0}, 
-				{4,1,4,2,5,1,3,1}, 
-				{4,2,4,1,5,2,3,2}, 
-				{4,3}, 
-				{4,4}, 
-				{4,5,5,5,3,5}, 
-				{4,6}, 
-				{5,0}, 
-				{5,1,4,1,5,2,6,1}, 
-				{5,2,4,2,5,1,6,2}, 
-				{5,3}, 
-				{5,4}, 
-				{5,5,4,5,6,5}, 
-				{5,6}, 
-				{6,0,7,0,6,1}, 
-				{6,1,6,0,5,1,6,2,7,1}, 
-				{6,2,5,2,6,1,7,2}, 
-				{6,3,7,3,6,4}, 
-				{6,4,6,3,7,4}, 
-				{6,5,5,5,6,6,7,5}, 
-				{6,6,7,6,6,5}, 
-				{7,0,6,0,7,1,8,0}, 
-				{7,1,8,1,7,0,6,1,7,2}, 
-				{7,2,7,3,8,2,6,2,7,1}, 
-				{7,3,6,3,7,2,7,4,8,3}, 
-				{7,4,7,3,8,4,6,4,7,5}, 
-				{7,5,8,5,7,6,7,4,6,5}, 
-				{7,6,6,6,7,5,8,6}, 
-				{8,0,8,1,7,0,9,0}, 
-				{8,1,8,2,9,1,7,1,8,0}, 
-				{8,2,8,1,7,2,8,3}, 
-				{8,3,8,2,7,3,8,4}, 
-				{8,4,8,5,8,3,7,4}, 
-				{8,5,9,5,8,4,7,5,8,6}, 
-				{8,6,8,5,7,6,9,6}, 
-				{9,0,9,1,8,0}, 
-				{9,1,8,1,9,2,9,0}, 
-				{9,2,9,1,9,3}, 
-				{9,3,9,2,9,4}, 
-				{9,4,9,5,9,3}, 
-				{9,5,8,5,9,4,9,6}, 
-				{9,6,9,5,8,6} 
-			};
-		Queue<Coordinate> queue = new Queue<Coordinate>();
+	public Stack<A> findPathFromDFS(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Predicate<Node<A>> p) {
 		
-		for(int i = 0; i < nicksGraph.length; i++) {
+		
+		Stack<A> stack = new Stack<A>();
+		Stack<A> path  = new Stack<A>();
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		
+		stack.push(startNode);
 			
-			Coordinate coord = new Coordinate(nicksGraph[i][0], nicksGraph[i][1]);
-			Node<Coordinate> nodeToQueue = new Node<Coordinate>(coord);
-			
-			for(int j = 2; j < (nicksGraph[i].length); j=j+2) {
-				Coordinate others = new Coordinate(nicksGraph[i][j], nicksGraph[i][j+1]);
-				Node<Coordinate> successor = new Node<Coordinate>(others);
-				nodeToQueue.addSuccessor(successor);
-			}
-			queue.enqueue(nodeToQueue);
-		}
-		return queue;
-
-	}
-	
-	public Node<Coordinate> BFS(Node<Coordinate> node, Node<Coordinate> goalNode) {
-		
-		Queue<Coordinate> queue = new Queue<Coordinate>(node);
-		
-		ArrayList<Node<Coordinate>> explored = new ArrayList<Node<Coordinate>>();
-		
-		while(!queue.isEmpty()) {
-					
-			Node<Coordinate> x = queue.dequeue();
-			
-			System.out.print(x.toString());
-			System.out.println("    Successors: " + x.getSuccessors());
+		while(!stack.isEmpty()) {
+			Node<A> x     = stack.pop();
+			path.push(x);
 			
 			if(!(alreadyExplored(explored, x))) {
 				
-				//if(p.holds(x.getNodeContent())) {
-				if(x.toString().equals(goalNode.toString())) {
-					return x;
+				if(p.holds(x)) {
+					return reorderStack(path);
 				}
 				
 				explored.add(x);
-			}	
-			
-			for(Node<Coordinate> succ: x.getSuccessors()) {
-				if(!(alreadyExplored(explored, succ))) {
-					//System.out.print("Adding successor: " + succ.toString());
-					//System.out.println("         Searching for: " + succ.toString());
+				
+				if(x.isLeaf()) {
+					path.pop();
+					Node<A> y = path.pop();
+					while(successorsExplored(explored, y)) {
+						y = path.pop();
+					}
+					path.push(y);
+				} else {
+					for(Node<A> succ: x.getSuccessors()) {
+						if(!(alreadyExplored(explored, succ))) {
+							stack.push(map.get(succ.getNodeNum()));
+						}
+					}
+				}
+				
+
+			}
+		}
+		return new Stack<A>();
+	}
+	
+	
+	public Stack<A> findPathFromBFS(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Predicate<Node<A>> p) {
+	
+		Stack<A> path  = new Stack<A>();
+		Queue<A> queue = new Queue<A>(startNode);
+	
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		
+		LinkedHashMap<Integer, Integer> route = new LinkedHashMap<Integer, Integer>();
+		
+		 
+		while(!queue.isEmpty()) {
 					
-					queue.enqueue(queue.findNode(queue, succ.toString()));
+			Node<A> x = queue.dequeue();
+			
+			if(!(alreadyExplored(explored, x))) {
+				if(p.holds(x)) {
+					int backtrack = x.getNodeNum();
+					while(backtrack != startNode.getNodeNum()) {
+						path.push(map.get(backtrack));
+						backtrack = route.get(backtrack);
+					}
+					return path;
+				}
+				
+				explored.add(x);
+				
+				if(x.isLeaf()) {
+					path.pop();
+					Node<A> y = path.pop();
+					while(successorsExplored(explored, y)) {
+						y = path.pop();
+					}
+					path.push(y);
+				} else {
+					for(Node<A> succ: x.getSuccessors()) {
+						if(!(alreadyExplored(explored, succ))) {
+							queue.enqueue(map.get(succ.getNodeNum()));
+							route.put(succ.getNodeNum(), x.getNodeNum());
+						}
+					}
 				}
 			}
-			
 		}	
-		return node;
+		
+		return new Stack<A>();
+	}
+
+	
+	public Stack<A> findPathFromAStar(LinkedHashMap<Integer, Node<A>> map, Node<A> startNode, Node<A> destination,
+			Function2<Node<A>, Node<A>, Integer> h) {
+		
+		Stack<A> path  = new Stack<A>();
+		PriorityQueue<Node<A>> pending = new PriorityQueue<Node<A>>(
+				15, new Comparator<Node<A>> () {
+					public int compare(Node<A> node1, Node<A> node2) {
+						if(node1.fVal > node2.fVal) {
+							return 1;
+						} else if (node1.fVal < node2.fVal) {
+							return -1;
+						}
+						return 0;
+					}
+				});
+
+		gethVals(map, h, destination);
+
+		ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+		LinkedHashMap<Integer, Integer> route = new LinkedHashMap<Integer, Integer>();
+
+		pending.add(startNode);
+		
+		while(!pending.isEmpty()) {
+					
+			Node<A> x = pending.poll();
+			
+			if(!(alreadyExplored(explored, x))) {
+				if(x.toString().equals(destination.toString())) {
+					int backtrack = x.getNodeNum();
+					while(backtrack != startNode.getNodeNum()) {
+						path.push(map.get(backtrack));
+						backtrack = route.get(backtrack);
+					}
+					return path;
+				}
+				
+				explored.add(x);
+				
+				if(x.isLeaf()) {
+					path.pop();
+					Node<A> y = path.pop();
+					while(successorsExplored(explored, y)) {
+						y = path.pop();
+					}
+					path.push(y);
+				} else {
+					for(Node<A> succ: map.get(x.getNodeNum()).getSuccessors()) {
+						if(!(alreadyExplored(explored, succ))) {
+							succ.increasefVal();
+							pending.add(map.get(succ.getNodeNum()));
+							route.put(succ.getNodeNum(), x.getNodeNum());
+						}
+					}
+				}
+			}
+	}
+	return new Stack<A>();	
+	}
+
+	public void gethVals (LinkedHashMap<Integer, Node<A>> map, Function2<Node<A>, Node<A>, 
+		Integer> h, Node<A> destination) {
+		for(int i = 0; i < map.size(); i++) {
+			int hv = h.apply(map.get(i), destination);
+			map.get(i).setHVal(hv);
+		}
+	
+	}
+
+
+	public Stack<A> reorderStack(Stack<A> stack) {
+		
+		Stack<A> copy = new Stack<A>();
+		
+		for(Node<A> n: stack) {
+			copy.push(n);
+		}
+		return copy;	
 	}
 }
+
+
+
+
+/*
+Stack<A> path  = new Stack<A>();
+PriorityQueue<Node<A>> pending = new PriorityQueue<Node<A>>(
+		15, new Comparator<Node<A>> () {
+			public int compare(Node<A> node1, Node<A> node2) {
+				if(node1.fVal > node2.fVal) {
+					return 1;
+				} else if (node1.fVal < node2.fVal) {
+					return -1;
+				}
+				return 0;
+			}
+		});
+
+gethVals(map, h, destination);
+
+ArrayList<Node<A>> explored = new ArrayList<Node<A>>();
+LinkedHashMap<Integer, Integer> route = new LinkedHashMap<Integer, Integer>();
+
+while(!pending.isEmpty()) {
+			
+	Node<A> x = pending.poll();
+	
+	if(!(alreadyExplored(explored, x))) {
+		if(x.toString().equals(destination.toString())) {
+			int backtrack = x.getNodeNum();
+			while(backtrack != startNode.getNodeNum()) {
+				path.push(map.get(backtrack));
+				backtrack = route.get(backtrack);
+			}
+			return path;
+		}
+		
+		explored.add(x);
+		
+		if(x.isLeaf()) {
+			path.pop();
+			Node<A> y = path.pop();
+			while(successorsExplored(explored, y)) {
+				y = path.pop();
+			}
+			path.push(y);
+		} else {
+			for(Node<A> succ: map.get(x.getNodeNum()).getSuccessors()) {
+				if(!(alreadyExplored(explored, succ))) {
+					succ.increasefVal();
+					pending.add(map.get(succ.getNodeNum()));
+					route.put(succ.getNodeNum(), x.getNodeNum());
+				}
+			}
+		}
+	}
+}	
+*/

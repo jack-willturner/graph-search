@@ -1,5 +1,7 @@
+import java.util.Iterator;
 
-public class Queue<A> {
+
+public class Queue<A> implements Iterable<Node<A>>, DataStructure<A>  {
 	private int size;
 	Item<A> first;
 	Item<A> last;
@@ -26,15 +28,19 @@ public class Queue<A> {
 		return size;
 	}
 	
-	public void enqueue(Node<A> node) {
-		Item<A> item = new Item();
+	public Node<A> peek() {
+		return first.content;
+	}
+	
+	public void push(Node<A> node) {
+		Item<A> item = new Item<A>();
 		item.content = node;
 		if(isEmpty()) { first = item; last = item; }
 		else          { last.next = item; last = item; }
 		size++;
 	}
 	
-	public Node<A> dequeue() {
+	public Node<A> pop() {
 		if(isEmpty()) { throw new RuntimeException("Queue underflow"); } 
 		
 		Node<A> node = first.content;
@@ -51,7 +57,7 @@ public class Queue<A> {
 		
 		while(notFound) {
 			if(queue.getSize() > 0) {
-				Node<Coordinate> node = queue.dequeue();
+				Node<Coordinate> node = queue.pop();
 				//System.out.println(node.getNodeContent().toString());
 				if(node.getNodeContent().toString().equals(string)) {
 					notFound = false;
@@ -66,84 +72,36 @@ public class Queue<A> {
 		return new Node<Coordinate>();
 	}
 	
-	
-	
-	/*
-	public void enqueue(Node<A> node) {
-		if(size == 0) {
-			first.content = node;
-			size++;
-		} else {
-			Item<A> newItem = new Item<A>();
-			newItem.content = node;
-			newItem.next    = new Item<A>();
-			
-			last.next       = newItem;
-			last            = newItem;
-			
-			size++;
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		for(Node<A> node : this) {
+			s.append(node + " ");
 		}
-	}
-	
-	public Node<A> dequeue() {
-		if(size == 0) {
-			throw new RuntimeException("Queue underflow");
-		} else {
-			Item<A> item = new Item<A>();
-			item = first;
-			
-			//System.out.println(item.content.toString());
-			
-			if(first.next != null) {
-				first = first.next;
-			} else {
-				first = new Item<A>();
-			}
-			size--;
-			return item.content;
-		}
-	}
 		
-	*/
+		return s.toString();
+	}
+	
+	public Iterator<Node<A>> iterator() { 
+		return new ListIterator();
+	}
+	
+	private class ListIterator implements Iterator<Node<A>> { 
+		private Item<A> current = first;
+		public boolean hasNext() { return current!=null; }
+		
+		public Node<A> next() {
+			Node<A> item = current.content;
+			current = current.next;
+			return item;
+		}
 
-	/*
-	public void enqueue(Node<A> node) {
-		if(size == 0) {
-			first         = new Item<A>();
-			first.content = node;
-			first.next    = first;
-			last          = new Item<A>();
-		} else {
-			Item<A> itemToAdd = new Item<A>();
-			itemToAdd.content = node;
-			itemToAdd.next    = new Item<A>();
-			last.next         = itemToAdd;
-			last              = itemToAdd;
+		@Override
+		public void remove() {
+			// TODO Auto-generated method stub
+			
 		}
-		
-		size++;
 	}
+
 	
-	public Node<A> dequeue() {
-		
-		assert(!this.isEmpty());	
-		
-		Item<A> item = new Item<A>();
-		item = first;
-		
-		if(size == 1) {
-			first = new Item<A>();
-		} else if (size == 2) {
-			first = last;
-			last = new Item<A>();
-		} else {
-			first = first.next;
-		}
-		
-		size--;
-		return item.content;
-		
-	}
-	*/
 }
 
